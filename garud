@@ -179,7 +179,7 @@ run_gettitle() {
 run_subtake() {
     sleep 1s
     echo -ne "${NORMAL}${BOLD}${YELLOW} ● Scanning is in progress:${NORMAL}${BOLD} Checking for subdomain takeovers of subdomains of $domain [${GREEN}${BLINK}50%${NORMAL}] \r"
-    cat $file-alive.txt | nuclei -t ~/nuclei-templates/takeovers/ -o vulnerabilities/$file-takeovers.txt -silent | notify -silent &> /dev/null
+    cat $file-alive.txt | nuclei -t ~/nuclei-templates/takeovers/ -o output/vulnerabilities/$file-takeovers.txt -silent
 }
 
 run_params() {
@@ -225,6 +225,17 @@ check_mail() {
     for target in $(echo "$domain"); do if [[ $(curl --connect-timeout 3 -kls --max-time 3 -d "serial=fred12&domain=${target}" -H "Content-Type: application/x-www-form-urlencoded" -X POST "https://www.kitterman.com/spf/getspf3.py") =~ 'SPF record passed validation test with pySPF' ]]; then echo -e "VULNERABLE: ${target}"; else echo -e "NOT VULNERABLE: ${target}"; fi done | tee vulnerabilities/$file-spf.txt | notify -silent &> /dev/null
     for target in $(echo "$domain"); do if [[ $(curl --connect-timeout 3 -kls --max-time 3 -X GET "https://dmarcly.com/server/dmarc_check.php?domain=${target}") =~ 'success' ]]; then echo -e "VULNERABLE: ${target}"; else echo -e "NOT VULNERABLE: ${target}"; fi done | tee vulnerabilities/$file-email.txt | notify -silent &> /dev/null
 }
+
+
+check_wapiti3() {
+        cd ~/Documents/wapiti3
+        . wapiti3/bin/activate
+        wapiti -u http://google.com -o wapiti_out
+        deactivate
+}       
+
+
+
 
 # check_QuickXss() {
 # sleep 1s
@@ -285,6 +296,7 @@ run_scans() {
     check_nuclei
     check_infoleak
     check_open
+    check_wapiti3
  #   slack_bot
     exit 1
 }
