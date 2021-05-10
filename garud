@@ -209,7 +209,8 @@ check_xss() {
     echo -ne "${NORMAL}${BOLD}${YELLOW} ● Scanning is in progress:${NORMAL}${BOLD} Checking for xss in $domain [${GREEN}${BLINK}85%${NORMAL}] \r"
     mkdir vulnerabilities/ &> /dev/null
     cat $file-xss.txt | kxss | tee vulnerabilities/$file-xssvuln.txt | notify -silent &> /dev/null
-    dalfox file $file-xss.txt pipe --silence --no-color --no-spinner | tee vulnerabilities/$file-dalfox.txt | notify -silent &> /dev/null
+    dalfox file $file-xss.txt pipe --silence --no-color --no-spinner | tee vulnerabilities/$file-dalfox.txt 
+    dalfox file $file-xss.txt -b https://ac1dXss.xss.ht pipe --silence --no-color --no-spinner | tee vulnerabilities/$file-dalfox_blind.txt 
 }
 
 check_crlf() {
@@ -225,6 +226,13 @@ check_mail() {
     for target in $(echo "$domain"); do if [[ $(curl --connect-timeout 3 -kls --max-time 3 -X GET "https://dmarcly.com/server/dmarc_check.php?domain=${target}") =~ 'success' ]]; then echo -e "VULNERABLE: ${target}"; else echo -e "NOT VULNERABLE: ${target}"; fi done | tee vulnerabilities/$file-email.txt | notify -silent &> /dev/null
 }
 
+# check_QuickXss() {
+# sleep 1s
+# echo "Scanning QuickXSS \r"
+# ~/tools/QuickXSS/QuickXSS.sh -d 
+
+# }
+
 check_nuclei() {
     sleep 1s
     echo -ne "${NORMAL}${BOLD}${YELLOW} ● Scanning is in progress:${NORMAL}${BOLD} Scanning for vulnerabilities of $domain using nuclei [${GREEN}${BLINK}90%${NORMAL}] \r"
@@ -234,7 +242,7 @@ check_nuclei() {
 check_infoleak() {
     sleep 1s
     echo -ne "${NORMAL}${BOLD}${YELLOW} ● Scanning is in progress:${NORMAL}${BOLD} Scanning for directories and sensitive files of $domain using dirsearch [${GREEN}${BLINK}94%${NORMAL}] \r"
-    python3 ~/tools/dirsearch/dirsearch.py -w ~/wordlists/big.txt -l $file-alive.txt -x 204,301,302,401,500,502,503,429 -e html,json,php,asp,aspx,log,sql,txt,asp,jsp,bak -r -R 3 --exclude-texts "403 Forbidden", "Log in to" --full-url -q --plain-text-report vulnerabilities/$file-dir.txt | notify -silent &> /dev/null
+    python3 ~/tools/dirsearch/dirsearch.py -w ~/wordlists/big.txt -l $file-alive.txt -x 204,301,302,401,500,502,503,429 -e html,json,php,asp,aspx,log,sql,txt,asp,jsp,bak -r --recursion-depth=3 --exclude-texts "403 Forbidden", "Log in to" --full-url -q --format=plain -o vulnerabilities/$file-dir.txt | notify -silent &> /dev/null
 }
 
 check_open() {
